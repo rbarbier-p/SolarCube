@@ -85,6 +85,9 @@ void selectLayer(uint8_t layer) {
 
 void selectRows(uint8_t rows) {
   ROW_PORT &= ~(1 << ROW_LATCH_PIN);
+  shiftOut(&ROW_PORT, ROW_DATA_PIN, ROW_CLOCK_PIN, 0);
+  shiftOut(&ROW_PORT, ROW_DATA_PIN, ROW_CLOCK_PIN, 0);
+  shiftOut(&ROW_PORT, ROW_DATA_PIN, ROW_CLOCK_PIN, 0);
   shiftOut(&ROW_PORT, ROW_DATA_PIN, ROW_CLOCK_PIN, rows);
   ROW_PORT |= (1 << ROW_LATCH_PIN);
 }
@@ -209,6 +212,6 @@ void main () {
   init_timer0();
 
   while (1) {
-    animation_even_odd();
+    crossing_laps_animation();
   }
 }

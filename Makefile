@@ -4,17 +4,22 @@ CC = avr-gcc
 OBJCOPY = avr-objcopy
 AVRDUDE = avrdude
 PROGRAMMER = arduino
-PORT = /dev/ttyACM0
+PORT = /dev/ttyUSB0
 BAUD = 115200
 
-SRC = main.c
-BIN = main.bin
-HEX = main.hex
+CFLAGS = -mmcu=$(MCU) -DF_CPU=$(F_CPU) -Os -Iinc
+
+SRC_DIR = src
+
+SRC_FILES = main.c mySoftI2C.c myDS1307.c
+SRC = $(addprefix $(SRC_DIR)/, $(SRC_FILES))
+BIN = program.bin
+HEX = program.hex
 
 all: hex flash
 
 hex:
-	$(CC) -mmcu=$(MCU) -DF_CPU=$(F_CPU) -Os -o $(BIN) $(SRC)
+	$(CC) $(CFLAGS) -o $(BIN) $(SRC)
 	$(OBJCOPY) -O ihex $(BIN) $(HEX)
 
 flash:
