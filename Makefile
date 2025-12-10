@@ -9,9 +9,16 @@ BAUD = 115200
 
 CFLAGS = -mmcu=$(MCU) -DF_CPU=$(F_CPU) -Os -Iinc
 
+CFLAGS += -DYEAR=$(shell date +%y)
+CFLAGS += -DMONTH=$(shell date +%m)
+CFLAGS += -DDAY=$(shell date +%d)
+CFLAGS += -DHOUR=$(shell date +%H)
+CFLAGS += -DMIN=$(shell date +%M)
+CFLAGS += -DSEC=$(shell date +%S)
+
 SRC_DIR = src
 
-SRC_FILES = main.c mySoftI2C.c myDS1307.c
+SRC_FILES = main.c mySoftI2C.c myDS1307.c UART.c
 SRC = $(addprefix $(SRC_DIR)/, $(SRC_FILES))
 BIN = program.bin
 HEX = program.hex

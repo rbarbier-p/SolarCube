@@ -1,27 +1,27 @@
 #include "mySoftI2C.h"
 
 // Global pin references
-static volatile uint8_t *SDA_PORT;
 static volatile uint8_t *SDA_DDR;
-static volatile uint8_t *SDA_PIN;
+static volatile uint8_t *SDA_PORT;
+static volatile uint8_t *SDA_PINREG;
 static uint8_t SDA_BIT;
 
-static volatile uint8_t *SCL_PORT;
 static volatile uint8_t *SCL_DDR;
-static volatile uint8_t *SCL_PIN;
+static volatile uint8_t *SCL_PORT;
+static volatile uint8_t *SCL_PINREG;
 static uint8_t SCL_BIT;
 
 static inline void i2c_delay(void) {
-    _delay_us(5); // 100 kHz approx
+    _delay_us(5);
 }
 
 static inline void SDA_high(void) {
-    *SDA_DDR &= ~(1 << SDA_BIT);   // input (line goes high via pull-up)
+    *SDA_DDR &= ~(1 << SDA_BIT);
 }
 
 static inline void SDA_low(void) {
     *SDA_PORT &= ~(1 << SDA_BIT);
-    *SDA_DDR |= (1 << SDA_BIT);    // output low
+    *SDA_DDR |= (1 << SDA_BIT);
 }
 
 static inline void SCL_high(void) {
@@ -33,24 +33,17 @@ static inline void SCL_low(void) {
     *SCL_DDR |= (1 << SCL_BIT);
 }
 
-void I2C_init(volatile uint8_t *sda_port,
-              volatile uint8_t *sda_ddr,
-              volatile uint8_t *sda_pinreg,
-              uint8_t sda_bit,
-              volatile uint8_t *scl_port,
-              volatile uint8_t *scl_ddr,
-              volatile uint8_t *scl_pinreg,
-              uint8_t scl_bit)
+void I2C_init(uint8_t SDA_PIN, uint8_t SCL_PIN)
 {
-    SDA_PORT = sda_port;
-    SDA_DDR = sda_ddr;
-    SDA_PIN = sda_pinreg;
-    SDA_BIT = sda_bit;
+    SDA_DDR    = pinmap[SDA_PIN].ddr;
+    SDA_PORT   = pinmap[SDA_PIN].port;
+    SDA_PINREG = pinmap[SDA_PIN].pin;
+    SDA_BIT    = pinmap[SDA_PIN].bit;
 
-    SCL_PORT = scl_port;
-    SCL_DDR = scl_ddr;
-    SCL_PIN = scl_pinreg;
-    SCL_BIT = scl_bit;
+    SCL_DDR    = pinmap[SCL_PIN].ddr;   // ← FIXED
+    SCL_PORT   = pinmap[SCL_PIN].port;
+    SCL_PINREG = pinmap[SCL_PIN].pin;
+    SCL_BIT    = pinmap[SCL_PIN].bit;
 
     SDA_high();
     SCL_high();
@@ -86,11 +79,13 @@ uint8_t I2C_write(uint8_t data) {
         data <<= 1;
     }
 
-    // ACK
+    // ACK bit
     SDA_high(); // release
     i2c_delay();
     SCL_high();
-    uint8_t ack = !(*SDA_PIN & (1 << SDA_BIT)); // ACK = pulled low
+
+    uint8_t ack = !(*SDA_PINREG & (1 << SDA_BIT)); // ← FIXED
+
     SCL_low();
     return ack;
 }
@@ -98,19 +93,21 @@ uint8_t I2C_write(uint8_t data) {
 uint8_t I2C_read(uint8_t ack) {
     uint8_t data = 0;
 
-    SDA_high(); // release line
+    SDA_high(); // release
 
     for (uint8_t i = 0; i < 8; i++) {
         data <<= 1;
 
         SCL_high();
         i2c_delay();
-        if (*SDA_PIN & (1 << SDA_BIT)) data |= 1;
+
+        if (*SDA_PINREG & (1 << SDA_BIT)) // ← FIXED
+            data |= 1;
+
         SCL_low();
         i2c_delay();
     }
 
-    // ACK/NACK
     if (ack)
         SDA_low();
     else
@@ -124,4 +121,3 @@ uint8_t I2C_read(uint8_t ack) {
 
     return data;
 }
-
