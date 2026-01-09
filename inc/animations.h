@@ -3,13 +3,17 @@
 
 #include <avr/io.h>
 #include <util/delay.h>
+#include <avr/interrupt.h>
+#include "cube_control.h"
 
-#define ANIM_DELAY 100
-#define TAIL_LEN 5
+#define SIZE 6
+#define PI 3.14159265
+#define ANIM_DELAY 50 
 
-void laps_animation();
-void crossing_laps_animation();
-void animation_even_odd();
+void vertical_sine_wave(float freq);
+void wave_animation();
+void diagonal_wave();
+void ft_delay(uint16_t ms);
 
 #endif
 

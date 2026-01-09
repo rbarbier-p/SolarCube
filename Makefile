@@ -18,7 +18,7 @@ CFLAGS += -DSEC=$(shell date +%S)
 
 SRC_DIR = src
 
-SRC_FILES = main.c cube_control.c mySoftI2C.c myDS1307.c UART.c
+SRC_FILES = main.c cube_control.c mySoftI2C.c myDS1307.c UART.c animations.c
 SRC = $(addprefix $(SRC_DIR)/, $(SRC_FILES))
 BIN = program.bin
 HEX = program.hex

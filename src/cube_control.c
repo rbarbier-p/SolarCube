@@ -1,10 +1,22 @@
 #include "cube_control.h"
 
+uint64_t frame[6] = {0};
+
+void select_led(uint8_t x, uint8_t y, uint8_t z) {
+  frame[z] |= 1ULL << shiftRegisterPinMap[coordinates_to_led_num(x, y)];
+}
+
+void clear_cube() {
+  for (int i = 0; i < 6; i++) {
+    frame[i] = 0;
+  }
+}
+
 uint8_t coordinates_to_led_num(uint8_t x, uint8_t y) {
   return (x + (y * 6));
 }
 
-void update_leds(uint64_t *frame) {
+void update_leds() {
   selectLayer(1);
   selectRows(frame[0]);
   _delay_ms(MULTIPLEX_DELAY);

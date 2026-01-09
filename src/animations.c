@@ -1,78 +1,103 @@
 #include "animations.h"
 
-void laps_animation() {
+void ft_delay(uint16_t ms) {
+  if (ms == 0) return;
 
-  static uint16_t pos = 0;
-  // turn ON the new head LED
-  data |= ((uint64_t)1 << path[pos]);
+  cli();
+  TCCR1A = 0;
+  TCCR1B = 0;
+  TCNT1 = 0;
 
-  // turn OFF the LED TAIL steps behind
-  uint16_t tailPos = (pos + PATH_LEN - TAIL_LEN) % PATH_LEN;
-  data &= ~((uint64_t)1 << path[tailPos]);
+  OCR1A = (uint32_t)ms * 15625UL / 1000UL;
 
-  // move forward
-  pos = (pos + 1) % PATH_LEN;
+  TCCR1B |= (1 << WGM12);               // CTC mode
+  TCCR1B |= (1 << CS12) | (1 << CS10);  // prescaler 1024
+  sei();
 
-  _delay_ms(10);
+  while (!(TIFR1 & (1 << OCF1A)));      // wait for compare
+
+  TIFR1 |= (1 << OCF1A);                // clear flag
+  TCCR1B = 0;
 }
 
-void crossing_laps_animation() {
-  
-  static int posA = 0;
-  static int posB = PATH_LEN / 2;
-  // clear everything each frame
-  data = 0;
+void vertical_sine_wave(float freq) {
+  float t = 0;
 
-  // draw comet A (forwards / clockwise)
-  for (int i = 0; i < TAIL_LEN; i++) {
-    int idx = (posA - i + PATH_LEN) % PATH_LEN;
-    data |= (uint64_t)1 << path[idx];
+  while (1) {
+    cli();
+    clear_cube();
+
+    for (int x = 0; x < SIZE; x++) {
+      float fx = (float)x / (SIZE - 1);
+
+      // freq = number of waves across the cube
+      float value = sin(2 * PI * freq * fx + t);
+
+      int z = (int)((value + 1.0) * 2.5);
+
+      for (int y = 0; y < SIZE; y++) {
+        select_led(x, y, z);
+      }
+    }
+
+    t += 1;   // temporal speed
+    sei();
+    ft_delay(ANIM_DELAY);
+    if (!(PINC & (1 << PC3)))
+      return ;
   }
-
-  // draw comet B (backwards / counter-clockwise)
-  for (int i = 0; i < TAIL_LEN; i++) {
-    int idx = (posB + i) % PATH_LEN;
-    data |= (uint64_t)1 << path[idx];
-  }
-
-  // update movement
-  posA = (posA + 1) % PATH_LEN;        // move forward
-  posB = (posB - 1 + PATH_LEN) % PATH_LEN; // move backward
-
-  _delay_ms(500);
 }
 
-void animation_even_odd()
-{
-  // 1) Turn on EVEN positions following track order
-  for (uint8_t i = 0; i < 48; i++) {
-    if ((i % 2) == 0) {
-      data |= ((uint64_t)1 << path[i]);
-      _delay_ms(ANIM_DELAY);
-    }
-  }
+void wave_animation() {
+  float t = 0;
 
-  // 2) Turn on ODD positions following track order
-  for (uint8_t i = 0; i < 48; i++) {
-    if ((i % 2) == 1) {
-      data |= ((uint64_t)1 << path[i]);
-      _delay_ms(ANIM_DELAY);
-    }
-  }
+  while (1) {
+    cli();
+    clear_cube();
 
-  // 3) Turn off EVEN positions following track order
-  for (uint8_t i = 0; i < 48; i++) {
-    if ((i % 2) == 0) {
-      data &= ~((uint64_t)1 << path[i]);
-      _delay_ms(ANIM_DELAY);
-    }
-  }
+    for (int x = 0; x < SIZE; x++) {
+      for (int y = 0; y < SIZE; y++) {
 
-  // 4) Turn off ODD positions following track order
-  for (uint8_t i = 0; i < 48; i++) {
-    if ((i % 2) == 1) {
-      data &= ~((uint64_t)1 << path[i]);
-      _delay_ms(ANIM_DELAY);
+        // Normalize x and y to 0..2π
+        float fx = (float)x / (SIZE - 1) * 2 * PI;
+        float fy = (float)y / (SIZE - 1) * 2 * PI;
+
+        // Sine wave
+        float value = sin(fx + fy + t);
+
+        // Map from -1..1 to 0..5
+        int z = (int)((value + 1.0) * 2.5);
+
+        select_led(x, y, z);
+      }
     }
+
+    t += 0.8;   // wave speed
+    sei();
+    ft_delay(ANIM_DELAY);
+    if (!(PINC & (1 << PC3)))
+      return ;
+  }
+}
+
+void diagonal_wave() {
+  int step = 0;
+
+  while (1) {
+    cli();
+    clear_cube();
+
+    for (int x = 0; x < 6; x++) {
+      for (int y = 0; y < 6; y++) {
+        int z = (x + y + step) % 6;
+        select_led(x, y, z);
+      }
+    }
+
+    step++;
+    sei();
+    ft_delay(ANIM_DELAY);
+    if (!(PINC & (1 << PC3)))
+      return ;
   }
 }
