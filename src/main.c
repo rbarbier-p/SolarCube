@@ -5,7 +5,6 @@
 #include "UART.h"
 #include "animations.h"
 
-
 void init_timer0(void) 
 {
 	TCCR0A |= (1 << WGM01); // CTC mode
@@ -26,11 +25,17 @@ void main () {
   UART_init();
   sei();
 
-  init_timer0();
- 
+  // init_timer0();
+  
   while (1) {
+    vertical_sine_wave(0.3);
+    _delay_ms(100);
+    drop_adder();  
+    _delay_ms(100);
     diagonal_wave();
-    vertical_sine_wave(0.4);
+    _delay_ms(100);
     wave_animation();
+    _delay_ms(100);
   }
 }
+

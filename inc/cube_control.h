@@ -3,6 +3,7 @@
 
 #include <avr/io.h>
 #include <util/delay.h>
+#include <avr/interrupt.h>
 
 #define LAY_CLOCK_PIN PD5 // pin D5 
 #define LAY_LATCH_PIN PD3 // pin D3 
@@ -43,5 +44,6 @@ void selectRows(uint64_t rows);
 uint8_t coordinates_to_led_num(uint8_t x, uint8_t y);
 void clear_cube();
 void select_led(uint8_t x, uint8_t y, uint8_t z);
+void clear_led(uint8_t x, uint8_t y, uint8_t z);
 
 #endif

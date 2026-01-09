@@ -6,6 +6,10 @@ void select_led(uint8_t x, uint8_t y, uint8_t z) {
   frame[z] |= 1ULL << shiftRegisterPinMap[coordinates_to_led_num(x, y)];
 }
 
+void clear_led(uint8_t x, uint8_t y, uint8_t z) {
+  frame[z] &= ~(1ULL << shiftRegisterPinMap[coordinates_to_led_num(x, y)]);
+}
+
 void clear_cube() {
   for (int i = 0; i < 6; i++) {
     frame[i] = 0;

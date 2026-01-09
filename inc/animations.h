@@ -14,6 +14,8 @@ void vertical_sine_wave(float freq);
 void wave_animation();
 void diagonal_wave();
 void ft_delay(uint16_t ms);
+void drop_add(uint8_t x, uint8_t y, uint8_t z);
+void drop_adder();
 
 #endif
 
