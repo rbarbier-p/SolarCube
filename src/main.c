@@ -5,37 +5,48 @@
 #include "UART.h"
 #include "animations.h"
 
-void init_timer0(void) 
-{
-	TCCR0A |= (1 << WGM01); // CTC mode
-	TCCR0B |= (1 << CS02) | (1 << CS00); // 1024 prescaler
-	TIMSK0 |= (1 << OCIE0A); // ouput compare match A interrupt enable
+volatile uint8_t current_animation = 0;
 
-	OCR0A = 20; // 0.016384s per timer0 cycle. / 1(s) = ~61
-}
+ISR(PCINT1_vect) {
+  static int pressed = 0;
+  pressed = (pressed + 1) % 2; // skip release
 
-ISR(TIMER0_COMPA_vect) {
-  update_leds();
+  if (pressed == 1) {
+    current_animation++;
+  }
+
+  _delay_ms(2);                // simple debounce
+  PCIFR |= (1 << PCIF1);        // clear pending interrupt for PCINT1 group
 }
 
 void main () {
   DDRC &= ~(1 << PC3);
   PORTC |= (1 << PC3);
-  pinInit();
+  PCICR |= (1 << PCIE1);     // enable PCINT1 group
+  PCMSK1 |= (1 << PCINT11);  // enable PCINT11 (PC3) specifically
+
+  pin_init();
   UART_init();
   sei();
 
-  // init_timer0();
-  
   while (1) {
-    vertical_sine_wave(0.3);
-    _delay_ms(100);
-    drop_adder();  
-    _delay_ms(100);
-    diagonal_wave();
-    _delay_ms(100);
-    wave_animation();
-    _delay_ms(100);
+    switch (current_animation) {
+      case 0:
+        vertical_sine_wave(0.5);
+        break;
+      case 1:
+        vertical_sine_wave_rotated(0.5);
+        break;
+      case 2:
+        drop_adder();
+        break;
+      case 3:
+        rain_animation(0.1);
+        break;
+      default:
+        current_animation = 0;
+        break;
+    }
   }
 }
 

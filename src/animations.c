@@ -1,38 +1,8 @@
 #include "animations.h"
+#include <stdlib.h>
+#include <time.h>
 
-void drop_add(uint8_t x, uint8_t y, uint8_t z) {
-  uint8_t drop_state = 5;
-  while (drop_state != z) {
-    select_led(x, y, drop_state);
-    update_leds();
-    update_leds();
-    clear_led(x, y, drop_state);
-    drop_state--;
- 
-  }
-  select_led(x, y, z);
-}
-
-void drop_adder() {
-  while (1) {
-    for (uint8_t z = 0; z < 6; z++) {
-      for (uint8_t y = 0; y < 6; y++) {
-        for (uint8_t x = 0; x < 6; x++) {
-          drop_add(x, y, z);
-          if (!(PINC & (1 << PC3)))
-
-          return (ft_delay(10), (void) 0);
-        }
-      }
-    }
-    clear_cube();
-  }
-}
-
-void ft_delay(uint16_t ms) {
-  if (ms == 0) return;
-
-  cli();
+void anim_delay(uint16_t ms) {
   TCCR1A = 0;
   TCCR1B = 0;
   TCNT1 = 0;
@@ -41,129 +11,155 @@ void ft_delay(uint16_t ms) {
 
   TCCR1B |= (1 << WGM12);               // CTC mode
   TCCR1B |= (1 << CS12) | (1 << CS10);  // prescaler 1024
-  sei();
 
-  while (!(TIFR1 & (1 << OCF1A)));      // wait for compare
+  while (!(TIFR1 & (1 << OCF1A))) {// wait for compare
+    update_leds();
+  }      
 
   TIFR1 |= (1 << OCF1A);                // clear flag
   TCCR1B = 0;
 }
-//
-// void vertical_sine_wave(float freq) {
-//   float t = 0;
-//
-//   while (1) {
-//     cli();
-//     clear_cube();
-//
-//     for (int x = 0; x < SIZE; x++) {
-//       float fx = (float)x / (SIZE - 1);
-//       float value = sin(2 * PI * freq * fx + t);
-//
-//       // smoother mapping: multiply by (SIZE-1)/2 instead of 2.5
-//       int z = (int)((value + 1.0) * ((SIZE - 1) / 2.0) + 0.5); 
-//
-//       for (int y = 0; y < SIZE; y++) {
-//         select_led(x, y, z);
-//       }
-//     }
-//
-//     t += 0.1;        // smaller increment = more frames per cycle
-//     ft_delay(ANIM_DELAY - 49);
-//
-//     if (!(PINC & (1 << PC3)))
-//       return;
-//   }
-// }
 
-#define SINE_RES 64  // number of points in sine table
-const float sine_table[SINE_RES] = {
-    0.0, 0.098, 0.195, 0.292, 0.383, 0.471, 0.556, 0.634,
-    0.707, 0.773, 0.831, 0.881, 0.924, 0.956, 0.980, 0.995,
-    1.0, 0.995, 0.980, 0.956, 0.924, 0.881, 0.831, 0.773,
-    0.707, 0.634, 0.556, 0.471, 0.383, 0.292, 0.195, 0.098,
-    0.0, -0.098, -0.195, -0.292, -0.383, -0.471, -0.556, -0.634,
-    -0.707, -0.773, -0.831, -0.881, -0.924, -0.956, -0.980, -0.995,
-    -1.0, -0.995, -0.980, -0.956, -0.924, -0.881, -0.831, -0.773,
-    -0.707, -0.634, -0.556, -0.471, -0.383, -0.292, -0.195, -0.098
-};
-
-void vertical_sine_wave(float freq) {
-    float t = 0;
-
-    while (1) {
-        clear_cube();
-
-        for (int x = 0; x < SIZE; x++) {
-            // map x to sine table index
-            int index = ((int)((freq * x / (SIZE - 1) * SINE_RES + t)) % SINE_RES + SINE_RES) % SINE_RES;
-            float value = sine_table[index];
-
-            int z = (int)((value + 1.0) * ((SIZE - 1) / 2.0) + 0.5);
-
-            for (int y = 0; y < SIZE; y++) {
-                select_led(x, y, z);
-            }
-        }
-
-        t += 1;   // speed in table indices
-        update_leds();
-        update_leds();
-
-        if (!(PINC & (1 << PC3)))
-            return;
-    }
+void drop_add(uint8_t x, uint8_t y, uint8_t z) {
+  uint8_t drop_state = 5;
+  while (drop_state != z) {
+    select_led(x, y, drop_state);
+    anim_delay(10);
+    clear_led(x, y, drop_state);
+    drop_state--;
+ 
+  }
+  select_led(x, y, z);
 }
 
-void wave_animation() {
-  float t = 0;
-
+void drop_adder() {
+  uint8_t anim_index = current_animation;
   while (1) {
-    clear_cube();
-
-    for (int x = 0; x < SIZE; x++) {
-      for (int y = 0; y < SIZE; y++) {
-
-        // Normalize x and y to 0..2π
-        float fx = (float)x / (SIZE - 1) * 2 * PI;
-        float fy = (float)y / (SIZE - 1) * 2 * PI;
-
-        // Sine wave
-        float value = sin(fx + fy + t);
-
-        // Map from -1..1 to 0..5
-        int z = (int)((value + 1.0) * 2.5);
-
-        select_led(x, y, z);
+    for (uint8_t z = 0; z < 6; z++) {
+      for (uint8_t y = 0; y < 6; y++) {
+        for (uint8_t x = 0; x < 6; x++) {
+          drop_add(x, y, z);
+          anim_delay(80);
+          if (anim_index != current_animation) return;
+        }
       }
     }
-
-    t += 0.7;   // wave speed
-    update_leds();
-    update_leds();
-    if (!(PINC & (1 << PC3)))
-      return ;
+    clear_cube();
   }
 }
 
-void diagonal_wave() {
-  int step = 0;
+void vertical_sine_wave(float freq) {
+  uint8_t anim_index = current_animation;
+  float t = 0;
 
-  while (1) {
-    cli();
+  while (anim_index == current_animation) {
     clear_cube();
 
-    for (int x = 0; x < 6; x++) {
-      for (int y = 0; y < 6; y++) {
-        int z = (x + y + step) % 6;
+    for (int x = 0; x < SIZE; x++) {
+      float fx = (float)x / (SIZE - 1);
+      float value = sin(2 * PI * freq * fx + t);
+
+      // smoother mapping: multiply by (SIZE-1)/2 instead of 2.5
+      int z = (int)((value + 1.0) * ((SIZE - 1) / 2.0) + 0.5); 
+
+      for (int y = 0; y < SIZE; y++) {
         select_led(x, y, z);
       }
     }
 
-    step++;
-    sei();
-    ft_delay(ANIM_DELAY);
-    if (!(PINC & (1 << PC3)))
-      return ;
+    t += 0.2;        // smaller increment = more frames per cycle
+    update_leds();
+    update_leds();
+    update_leds();
+  }
+}
+
+void vertical_sine_wave_rotated(float freq) {
+  uint8_t anim_index = current_animation;
+  float t = 0;
+  float theta = 0;  // rotation angle
+
+  while (anim_index == current_animation) {
+    clear_cube();
+
+    float cos_theta = cos(theta);
+    float sin_theta = sin(theta);
+
+    for (int x = 0; x < SIZE; x++) {
+      for (int y = 0; y < SIZE; y++) {
+        // rotate coordinates around the center
+        float cx = x - (SIZE - 1) / 2.0f;
+        float cy = y - (SIZE - 1) / 2.0f;
+
+        float rx = cx * cos_theta - cy * sin_theta;
+        // float ry = cx * sin_theta + cy * cos_theta; // not needed for vertical wave
+
+        // map rotated x to sine wave
+        float fx = (rx + (SIZE - 1) / 2.0f) / (SIZE - 1);
+        float value = sin(2 * PI * freq * fx + t);
+
+        int z = (int)((value + 1.0f) * ((SIZE - 1) / 2.0f) + 0.5);
+
+        select_led(x, y, z);
+      }
+    }
+
+    t += 0.1;           // wave motion
+    theta += 0.01;      // rotation speed, adjust for faster/slower
+    if (theta > 2 * PI) theta -= 2 * PI;
+
+    update_leds();
+  }
+}
+
+void rain_animation(float density) {
+  uint8_t anim_index = current_animation;
+  // Call once at the start
+  srand(time(NULL));  // seed random numbers
+  // density: probability of a new drop per column per frame (0.0 to 1.0)
+  int cube[SIZE][SIZE][SIZE] = {0};
+
+  while (anim_index == current_animation) {
+    clear_cube();
+
+    // Move drops down
+    for (int z = 0; z < SIZE - 1; z++) {
+      for (int x = 0; x < SIZE; x++) {
+        for (int y = 0; y < SIZE; y++) {
+          cube[z][x][y] = cube[z + 1][x][y];
+        }
+      }
+    }
+
+    // Clear top layer
+    for (int x = 0; x < SIZE; x++)
+      for (int y = 0; y < SIZE; y++)
+        cube[SIZE - 1][x][y] = 0;
+
+    // Spawn new drops at top layer randomly
+    for (int x = 0; x < SIZE; x++) {
+      for (int y = 0; y < SIZE; y++) {
+        if ((float)rand() / RAND_MAX < density)
+          cube[SIZE - 1][x][y] = 1; // drop present
+      }
+    }
+
+    // Draw the cube
+    for (int z = 0; z < SIZE; z++)
+      for (int x = 0; x < SIZE; x++)
+        for (int y = 0; y < SIZE; y++)
+          if (cube[z][x][y])
+            select_led(x, y, z);
+
+    anim_delay(60);
+    // update_leds();
+    // update_leds();
+    // update_leds();
+    // update_leds();
+    // update_leds();
+    // update_leds();
+    // update_leds();
+    // update_leds();
+    // update_leds();
   }
 }

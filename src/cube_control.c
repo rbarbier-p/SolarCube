@@ -52,7 +52,7 @@ void update_leds() {
   selectRows(0);
 }
 
-void pinInit() {
+void pin_init() {
   LAY_DDR |= (1 << LAY_CLOCK_PIN) | (1 << LAY_LATCH_PIN) | (1 << LAY_DATA_PIN);
   ROW_DDR |= (1 << ROW_CLOCK_PIN) | (1 << ROW_LATCH_PIN) | (1 << ROW_DATA_PIN);
 

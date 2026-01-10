@@ -37,7 +37,7 @@ static const uint8_t shiftRegisterPinMap[] = {
 };
 
 void update_leds();
-void pinInit();
+void pin_init();
 void shiftOut(volatile uint8_t *port, uint8_t bitOrder, uint8_t dataPin, uint8_t clockPin, uint8_t val);
 void selectLayer(uint8_t layer);
 void selectRows(uint64_t rows);
