@@ -14,12 +14,12 @@ BUILD_DIR = .build
 
 # Compiler flags
 CFLAGS = -mmcu=$(MCU) -DF_CPU=$(F_CPU) -Os -Iinc
-CFLAGS += -DYEAR=$(shell date +%y)
-CFLAGS += -DMONTH=$(shell date +%m)
-CFLAGS += -DDAY=$(shell date +%d)
-CFLAGS += -DHOUR=$(shell date +%H)
-CFLAGS += -DMIN=$(shell date +%M)
-CFLAGS += -DSEC=$(shell date +%S)
+CFLAGS += -DYEAR=$(shell date +%-y)
+CFLAGS += -DMONTH=$(shell date +%-m)
+CFLAGS += -DDAY=$(shell date +%-d)
+CFLAGS += -DHOUR=$(shell date +%-H)
+CFLAGS += -DMIN=$(shell date +%-M)
+CFLAGS += -DSEC=$(shell date +%-S)
 
 # Source files
 SRC_DIR = src

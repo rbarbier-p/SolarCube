@@ -12,16 +12,34 @@
 
 volatile uint8_t current_animation = 0;
 
-ISR(PCINT1_vect) {
-  static int pressed = 0;
-  pressed = (pressed + 1) % 2; // skip release
+// ISR(PCINT1_vect) {
+//   static int pressed = 0;
+//   pressed = (pressed + 1) % 2; // skip release
+//
+//   if (pressed == 1) {
+//     current_animation++;
+//   }
+//
+//   _delay_ms(2);                // simple debounce
+//   PCIFR |= (1 << PCIF1);        // clear pending interrupt for PCINT1 group
+// }
+ISR(PCINT1_vect)
+{
+    static uint8_t last_pc3 = 1;          // previous state (pull-up = high)
+    uint8_t now_pc3 = PINC & (1 << PC3);  // current state
 
-  if (pressed == 1) {
-    current_animation++;
-  }
+    // Detect button press: HIGH -> LOW on PC3
+    if (last_pc3 && !now_pc3)
+    {
+        _delay_ms(5);                    // small debounce
+        if (!(PINC & (1 << PC3)))        // still low after debounce
+        {
+            current_animation++;
+        }
+    }
 
-  _delay_ms(2);                // simple debounce
-  PCIFR |= (1 << PCIF1);        // clear pending interrupt for PCINT1 group
+    last_pc3 = now_pc3;                 // store state for next interrupt
+    PCIFR |= (1 << PCIF1);               // clear PCINT1 group flag
 }
 
 void print_time(DS1307_Time *t) {
@@ -51,7 +69,7 @@ int main(void) {
 
   pin_init();
   UART_init();
-  I2C_init(8, 9);
+  I2C_init(16, 15);
   DS1307_init();   // ensure oscillator ON
   UART_print_str("Starting DS1307...\r\n");
 
@@ -84,10 +102,23 @@ int main(void) {
         break;
       default:
         current_animation = 0;
-        break;
+        continue;
     }
     DS1307_getTime(&t);
     print_time(&t);
+    // print the sunrise/sunset times for that day by reading from progmem sunrises and sunsets arrays
+    uint16_t sunrise = pgm_read_word(&(sunrises[(t.month - 1) * 30 + t.date - 1]));
+    uint16_t sunset = pgm_read_word(&(sunsets[(t.month - 1) * 30 + t.date - 1]));
+    UART_print_str("Sunrise: ");
+    UART_print_num(sunrise / 100);
+    UART_tx(':');
+    UART_print_num(sunrise % 100);
+    UART_print_str(" Sunset: ");
+    UART_print_num(sunset / 100);
+    UART_tx(':');
+    UART_print_num(sunset % 100);
+    UART_print_str("\r\n");
+
   }
 }
 
