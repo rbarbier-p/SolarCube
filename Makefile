@@ -23,7 +23,7 @@ CFLAGS += -DSEC=$(shell date +%S)
 
 # Source files
 SRC_DIR = src
-SRC_FILES = main.c cube_control.c mySoftI2C.c myDS1307.c UART.c animations.c
+SRC_FILES = main.c cube_control.c mySoftI2C.c myDS1307.c UART.c animations.c times.c
 SRC = $(addprefix $(SRC_DIR)/, $(SRC_FILES))
 
 # Output files in build folder
@@ -59,9 +59,12 @@ size: $(ELF) | $(BUILD_DIR)
 	@awk -v flash_total=$(FLASH) -v sram_total=$(SRAM) ' \
 	/Program:/ {match($$0,/([0-9]+) bytes/,a); flash=a[1]+0} \
 	/Data:/ {match($$0,/([0-9]+) bytes/,a); ram=a[1]+0} \
-	END {printf "Flash usage: %d bytes (%.1f%% of %d KB)\nRAM usage: %d bytes (%.1f%% of %d KB)\n", \
-	flash, flash/flash_total*100, flash_total/1024, ram, ram/sram_total*100, sram_total/1024}' $(SIZE_TXT)
+	END {printf "Flash usage: \033[0;33m%d\033[0m bytes of %d KB (%.1f%%)\nRAM usage: \033[0;33m%d\033[0m bytes of %d KB (%.1f%%)\n", \
+	flash, flash_total/1024, flash/flash_total*100, ram, sram_total/1024, ram/sram_total*100}' $(SIZE_TXT)
 
+screen: all
+	screen $(PORT) 115200
+	
 # Clean build files
 clean:
 	rm -rf $(BUILD_DIR)

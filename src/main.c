@@ -4,6 +4,11 @@
 #include "cube_control.h"
 #include "UART.h"
 #include "animations.h"
+#include "times.h"
+#include "mySoftI2C.h"
+#include "myDS1307.h"
+
+#define RTCADDR 0x50
 
 volatile uint8_t current_animation = 0;
 
@@ -19,7 +24,26 @@ ISR(PCINT1_vect) {
   PCIFR |= (1 << PCIF1);        // clear pending interrupt for PCINT1 group
 }
 
-void main () {
+void print_time(DS1307_Time *t) {
+  // Print format: HH:MM:SS DD/MM/YY
+  UART_print_num(t->hour);
+  UART_tx(':');
+  UART_print_num(t->minute);
+  UART_tx(':');
+  UART_print_num(t->second);
+
+  UART_print_str("   ");
+
+  UART_print_num(t->date);
+  UART_tx('/');
+  UART_print_num(t->month);
+  UART_tx('/');
+  UART_print_num(t->year);
+
+  UART_print_str("\r\n");
+}
+
+int main(void) {
   DDRC &= ~(1 << PC3);
   PORTC |= (1 << PC3);
   PCICR |= (1 << PCIE1);     // enable PCINT1 group
@@ -27,8 +51,23 @@ void main () {
 
   pin_init();
   UART_init();
-  sei();
+  I2C_init(8, 9);
+  DS1307_init();   // ensure oscillator ON
+  UART_print_str("Starting DS1307...\r\n");
 
+  DS1307_Time t = {
+    .year = YEAR,
+    .month = MONTH,
+    .date = DAY,
+    .hour = HOUR,
+    .minute = MIN,
+    .second = SEC,
+    .day = 1
+  };
+
+  DS1307_setTime(&t);
+
+  sei();
   while (1) {
     switch (current_animation) {
       case 0:
@@ -47,6 +86,8 @@ void main () {
         current_animation = 0;
         break;
     }
+    DS1307_getTime(&t);
+    print_time(&t);
   }
 }
 

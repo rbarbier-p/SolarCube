@@ -40,7 +40,7 @@ void I2C_init(uint8_t SDA_PIN, uint8_t SCL_PIN)
     SDA_PINREG = pinmap[SDA_PIN].pin;
     SDA_BIT    = pinmap[SDA_PIN].bit;
 
-    SCL_DDR    = pinmap[SCL_PIN].ddr;   // ← FIXED
+    SCL_DDR    = pinmap[SCL_PIN].ddr; 
     SCL_PORT   = pinmap[SCL_PIN].port;
     SCL_PINREG = pinmap[SCL_PIN].pin;
     SCL_BIT    = pinmap[SCL_PIN].bit;

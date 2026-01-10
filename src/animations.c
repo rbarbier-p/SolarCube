@@ -2,6 +2,12 @@
 #include <stdlib.h>
 #include <time.h>
 
+void update(uint8_t n) {
+  for (uint8_t i = 0; i < n; i++) {
+    update_leds();
+  }
+}
+
 void anim_delay(uint16_t ms) {
   TCCR1A = 0;
   TCCR1B = 0;
@@ -68,9 +74,7 @@ void vertical_sine_wave(float freq) {
     }
 
     t += 0.2;        // smaller increment = more frames per cycle
-    update_leds();
-    update_leds();
-    update_leds();
+    update(3);
   }
 }
 
@@ -151,15 +155,7 @@ void rain_animation(float density) {
           if (cube[z][x][y])
             select_led(x, y, z);
 
-    anim_delay(60);
-    // update_leds();
-    // update_leds();
-    // update_leds();
-    // update_leds();
-    // update_leds();
-    // update_leds();
-    // update_leds();
-    // update_leds();
-    // update_leds();
+    // anim_delay(60);
+    update(10);
   }
 }
