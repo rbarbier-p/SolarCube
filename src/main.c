@@ -12,17 +12,6 @@
 
 volatile uint8_t current_animation = 0;
 
-// ISR(PCINT1_vect) {
-//   static int pressed = 0;
-//   pressed = (pressed + 1) % 2; // skip release
-//
-//   if (pressed == 1) {
-//     current_animation++;
-//   }
-//
-//   _delay_ms(2);                // simple debounce
-//   PCIFR |= (1 << PCIF1);        // clear pending interrupt for PCINT1 group
-// }
 ISR(PCINT1_vect)
 {
     static uint8_t last_pc3 = 1;          // previous state (pull-up = high)
@@ -100,6 +89,9 @@ int main(void) {
       case 3:
         rain_animation(0.1);
         break;
+      case 4:
+        solar_clock(t);
+        break;
       default:
         current_animation = 0;
         continue;
@@ -118,7 +110,6 @@ int main(void) {
     UART_tx(':');
     UART_print_num(sunset % 100);
     UART_print_str("\r\n");
-
   }
 }
 

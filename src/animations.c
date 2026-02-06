@@ -1,5 +1,7 @@
 #include "animations.h"
 #include <stdlib.h>
+#include "times.h"
+#include "myDS1307.h"
 #include <time.h>
 
 void update(uint8_t n) {
@@ -51,6 +53,55 @@ void drop_adder() {
       }
     }
     clear_cube();
+  }
+}
+
+uint16_t get_sunrise_minutes(DS1307_Time t) {
+  uint16_t sunrise = pgm_read_word(&(sunrises[(t.month - 1) * 30 + t.date - 1]));
+  return (sunrise / 100) * 60 + (sunrise % 100);
+}
+
+uint16_t get_sunset_minutes(DS1307_Time t) {
+  uint16_t sunset = pgm_read_word(&(sunsets[(t.month - 1) * 30 + t.date - 1]));
+  return (sunset / 100) * 60 + (sunset % 100);
+}
+
+void solar_clock(DS1307_Time t) {
+  uint8_t anim_index = current_animation;
+  while (anim_index == current_animation) {
+    DS1307_getTime(&t);
+    clear_cube();
+    uint8_t led_count = 216;
+    uint8_t lit_leds = 0;
+
+    // Get sunrise and sunset times (in minutes)
+    uint16_t sunrise_minutes = get_sunrise_minutes(t);
+    uint16_t sunset_minutes = get_sunset_minutes(t);
+
+    // Calculate the total minutes of daylight
+    uint16_t current_minutes = t.hour * 60 + t.minute;
+
+    // Calculate the number of lit LEDs based on time
+    if (current_minutes >= sunrise_minutes && current_minutes <= sunset_minutes) {
+      uint16_t midday_minutes = (sunrise_minutes + sunset_minutes) / 2;
+      if (current_minutes <= midday_minutes) {
+        // From sunrise to midday, increase the number of lit LEDs
+        lit_leds = (uint8_t)(((current_minutes - sunrise_minutes) / (float)(midday_minutes - sunrise_minutes)) * led_count);
+      } else {
+        // From midday to sunset, decrease the number of lit LEDs
+        lit_leds = (uint8_t)(((sunset_minutes - current_minutes) / (float)(sunset_minutes - midday_minutes)) * led_count);
+      }
+    }
+
+    // Light up the LEDs based on the calculated position of the sun
+    for (uint8_t i = 0; i < lit_leds; i++) {
+      uint8_t x = i % 6;
+      uint8_t y = (i / 6) % 6;
+      uint8_t z = i / (6 * 6);
+      select_led(x, y, z); // Light up the LED
+    }
+
+    update(10);
   }
 }
 
