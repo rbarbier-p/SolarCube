@@ -3,6 +3,7 @@
 uint64_t frame[6] = {0};
 
 void select_led(uint8_t x, uint8_t y, uint8_t z) {
+  if (z >= 6) return; // out of bounds check
   frame[z] |= 1ULL << shiftRegisterPinMap[coordinates_to_led_num(x, y)];
 }
 

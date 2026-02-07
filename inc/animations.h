@@ -14,13 +14,9 @@
 extern volatile uint8_t current_animation;
 
 void vertical_sine_wave(float freq);
-void wave_animation();
-void diagonal_wave();
 void anim_delay(uint16_t ms);
 void update(uint8_t n);
-void drop_add(uint8_t x, uint8_t y, uint8_t z);
 void drop_adder();
-void rotating_sine_wave(float freq);
 void vertical_sine_wave_rotated(float freq);
 void rain_animation(float density);
 void solar_clock(DS1307_Time t);

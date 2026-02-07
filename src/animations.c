@@ -29,12 +29,12 @@ void anim_delay(uint16_t ms) {
   TCCR1B = 0;
 }
 
-void drop_add(uint8_t x, uint8_t y, uint8_t z) {
+void drop_add(uint8_t x, uint8_t y, uint8_t z, uint8_t speed) {
   int8_t drop_state = 5;
 
   while (drop_state > z) {
     select_led(x, y, drop_state);
-    anim_delay(10);
+    anim_delay(speed);
     clear_led(x, y, drop_state);
     drop_state--;
   }
@@ -42,12 +42,12 @@ void drop_add(uint8_t x, uint8_t y, uint8_t z) {
   select_led(x, y, z);
 }
 
-void drop_remove(uint8_t x, uint8_t y, uint8_t z) {
+void drop_remove(uint8_t x, uint8_t y, uint8_t z, uint8_t speed) {
     uint8_t drop_state = z;
 
     while (drop_state < 6) {   // 6 is above top layer
         select_led(x, y, drop_state);  // light current layer
-        anim_delay(100);                // small delay for animation
+        anim_delay(speed);                // small delay for animation
         clear_led(x, y, drop_state);   // clear it before moving up
         drop_state++;
     }
@@ -60,7 +60,7 @@ void drop_adder() {
     for (uint8_t z = 0; z < 6; z++) {
       for (uint8_t y = 0; y < 6; y++) {
         for (uint8_t x = 0; x < 6; x++) {
-          drop_add(x, y, z);
+          drop_add(x, y, z, 10);
           anim_delay(80);
           if (anim_index != current_animation) return;
         }
@@ -128,12 +128,9 @@ void initial_drop_wave(uint8_t column_height[6][6]) {
             }
         }
 
-        update(6);
-        anim_delay(5); // control speed of fall
+        update(5); //speed
     }
 }
-
-
 
 void solar_clock(DS1307_Time t) {
   uint8_t anim_index = current_animation;
@@ -174,7 +171,7 @@ void solar_clock(DS1307_Time t) {
   UART_print_num(sunset_minutes % 60); // Send sunset minute
 
 
-  uint8_t prev_lit_leds = 0;//lit_leds;
+  uint8_t prev_lit_leds = lit_leds;
   clear_cube();
 
   uint8_t column_height[6][6] = {0};
@@ -185,8 +182,6 @@ void solar_clock(DS1307_Time t) {
   }
 
   initial_drop_wave(column_height);
-  UART_print_str("\r\nlided: ");
-  UART_print_num(lit_leds);
   while (anim_index == current_animation) {
 
     // Recalculate the number of lit LEDs in the loop
@@ -201,7 +196,6 @@ void solar_clock(DS1307_Time t) {
         lit_leds = (uint8_t)(((sunset_minutes - current_minutes) / (float)(sunset_minutes - midday_minutes)) * led_count);
       }
     } else {
-      UART_print_str("Outside sunrise/sunset hours\r\n");
       lit_leds = 0; // No LEDs lit outside of sunrise/sunset
     }
 
@@ -211,21 +205,16 @@ void solar_clock(DS1307_Time t) {
       uint8_t x = i % 6;
       uint8_t y = (i / 6) % 6;
       uint8_t z = i / 36;
-      drop_add(x, y, z);
+      drop_add(x, y, z, 100);
     }
   }
   else if (lit_leds < prev_lit_leds) {
-    UART_print_str("Updating LEDs: ");
-    UART_print_str("\n\rLit: ");
-    UART_print_num(lit_leds);
-    UART_print_str(" Prev: ");
-    UART_print_num(prev_lit_leds);
     // REMOVE LEDs (sun setting / decay)
     for (int16_t i = prev_lit_leds - 1; i >= lit_leds; i--) {
       uint8_t x = i % 6;
       uint8_t y = (i / 6) % 6;
       uint8_t z = i / 36;
-      drop_remove(x, y, z);
+      drop_remove(x, y, z, 100);
     }
   }
 

@@ -78,19 +78,16 @@ int main(void) {
   while (1) {
     switch (current_animation) {
       case 0:
-        vertical_sine_wave(0.5);
+        solar_clock(t);
         break;
       case 1:
-        vertical_sine_wave_rotated(0.5);
+        vertical_sine_wave(0.5);
         break;
       case 2:
-        drop_adder();
+        vertical_sine_wave_rotated(0.5);
         break;
       case 3:
         rain_animation(0.1);
-        break;
-      case 4:
-        solar_clock(t);
         break;
       default:
         current_animation = 0;
