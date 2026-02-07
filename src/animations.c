@@ -182,10 +182,17 @@ void solar_clock(DS1307_Time t) {
   }
 
   initial_drop_wave(column_height);
+  uint8_t prev_minute = t.minute;
   while (anim_index == current_animation) {
 
     // Recalculate the number of lit LEDs in the loop
     DS1307_getTime(&t);
+    if (t.minute != prev_minute) {
+      prev_minute = t.minute;
+    } else {
+      update(100);
+      continue; // only update LEDs when the minute changes
+    }
     current_minutes = t.hour * 60 + t.minute;
 
     if (current_minutes >= sunrise_minutes && current_minutes <= sunset_minutes) {
@@ -219,7 +226,7 @@ void solar_clock(DS1307_Time t) {
   }
 
   prev_lit_leds = lit_leds;
-  update(1000);
+  update(20);
   }
 }
 
