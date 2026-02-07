@@ -15,7 +15,7 @@ extern volatile uint8_t current_animation;
 
 void vertical_sine_wave(float freq);
 void anim_delay(uint16_t ms);
-void update(uint8_t n);
+void update(uint16_t n);
 void drop_adder();
 void vertical_sine_wave_rotated(float freq);
 void rain_animation(float density);

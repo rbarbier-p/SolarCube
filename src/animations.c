@@ -5,8 +5,8 @@
 #include "UART.h"
 #include <time.h>
 
-void update(uint8_t n) {
-  for (uint8_t i = 0; i < n; i++) {
+void update(uint16_t n) {
+  for (uint16_t i = 0; i < n; i++) {
     update_leds();
   }
 }
@@ -219,7 +219,7 @@ void solar_clock(DS1307_Time t) {
   }
 
   prev_lit_leds = lit_leds;
-  update(100);
+  update(1000);
   }
 }
 
