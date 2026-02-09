@@ -87,26 +87,14 @@ int main(void) {
         vertical_sine_wave_rotated(0.5);
         break;
       case 3:
+        continue;
+      case 4:
         rain_animation(0.1);
         break;
       default:
         current_animation = 0;
         continue;
     }
-    DS1307_getTime(&t);
-    print_time(&t);
-    // print the sunrise/sunset times for that day by reading from progmem sunrises and sunsets arrays
-    uint16_t sunrise = pgm_read_word(&(sunrises[(t.month - 1) * 30 + t.date - 1]));
-    uint16_t sunset = pgm_read_word(&(sunsets[(t.month - 1) * 30 + t.date - 1]));
-    UART_print_str("Sunrise: ");
-    UART_print_num(sunrise / 100);
-    UART_tx(':');
-    UART_print_num(sunrise % 100);
-    UART_print_str(" Sunset: ");
-    UART_print_num(sunset / 100);
-    UART_tx(':');
-    UART_print_num(sunset % 100);
-    UART_print_str("\r\n");
   }
 }
 
