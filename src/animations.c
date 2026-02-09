@@ -293,45 +293,213 @@ void vertical_sine_wave_rotated(float freq) {
 }
 
 void rain_animation(float density) {
-  uint8_t anim_index = current_animation;
+  const uint8_t anim_index = current_animation;
   // Call once at the start
   srand(time(NULL));  // seed random numbers
   // density: probability of a new drop per column per frame (0.0 to 1.0)
-  int cube[SIZE][SIZE][SIZE] = {0};
+  int8_t cube[6][6][6] = {0};
 
   while (anim_index == current_animation) {
     clear_cube();
 
     // Move drops down
-    for (int z = 0; z < SIZE - 1; z++) {
-      for (int x = 0; x < SIZE; x++) {
-        for (int y = 0; y < SIZE; y++) {
+    for (uint8_t z = 0; z < 6 - 1; z++) {
+      for (uint8_t x = 0; x < 6; x++) {
+        for (uint8_t y = 0; y < 6; y++) {
           cube[z][x][y] = cube[z + 1][x][y];
         }
       }
     }
 
     // Clear top layer
-    for (int x = 0; x < SIZE; x++)
-      for (int y = 0; y < SIZE; y++)
-        cube[SIZE - 1][x][y] = 0;
+    for (uint8_t x = 0; x < 6; x++)
+      for (uint8_t y = 0; y < 6; y++)
+        cube[5][x][y] = 0;
 
     // Spawn new drops at top layer randomly
-    for (int x = 0; x < SIZE; x++) {
-      for (int y = 0; y < SIZE; y++) {
+    for (uint8_t x = 0; x < 6; x++) {
+      for (uint8_t y = 0; y < 6; y++) {
         if ((float)rand() / RAND_MAX < density)
-          cube[SIZE - 1][x][y] = 1; // drop present
+          cube[5][x][y] = 1; // drop present
       }
     }
 
     // Draw the cube
-    for (int z = 0; z < SIZE; z++)
-      for (int x = 0; x < SIZE; x++)
-        for (int y = 0; y < SIZE; y++)
+    for (uint8_t z = 0; z < 6; z++)
+      for (uint8_t x = 0; x < 6; x++)
+        for (uint8_t y = 0; y < 6; y++)
           if (cube[z][x][y])
             select_led(x, y, z);
 
     // anim_delay(60);
     update(10);
+  }
+}
+
+void expanding_cube() {
+  const uint8_t anim_index = current_animation;
+  while (anim_index == current_animation) {
+    for (int8_t min = 2, max = 3; min >= 0 && max < 6; min--, max++) {
+      clear_cube();
+
+
+      for (int8_t x = min; x <= max; x++) {
+        for (int8_t y = min; y <= max; y++) {
+          for (int8_t z = min; z <= max; z++) {
+            uint8_t on_edge =
+            (x == min || x == max) +
+            (y == min || y == max) +
+            (z == min || z == max);
+
+
+            // exactly two coordinates on the boundary = edge
+            if (on_edge >= 2) {
+              select_led(x, y, z);
+            }
+          }
+        }
+      }
+
+      anim_delay(200);
+    }
+    anim_delay(500);
+  }
+}
+
+int rand_sign() {
+  return (rand() & 1) ? 1 : -1;
+}
+
+void random_direction(int8_t *dx, int8_t *dy, int8_t *dz) {
+  *dx = *dy = *dz = 0;
+
+  uint8_t r = rand() % 100;
+
+  if (r < 70) {
+    // 1 axis
+    uint8_t axis = rand() % 3;
+    if (axis == 0) *dx = rand_sign();
+    if (axis == 1) *dy = rand_sign();
+    if (axis == 2) *dz = rand_sign();
+
+  } else if (r < 95) {
+    // 2 axes
+    uint8_t a = rand() % 3;
+    uint8_t b;
+    do { b = rand() % 3; } while (b == a);
+
+    if (a == 0 || b == 0) *dx = rand_sign();
+    if (a == 1 || b == 1) *dy = rand_sign();
+    if (a == 2 || b == 2) *dz = rand_sign();
+
+  } else {
+    // 3 axes (true diagonal)
+    *dx = rand_sign();
+    *dy = rand_sign();
+    *dz = rand_sign();
+  }
+}
+
+void moving_cube_random(void) {
+  const uint8_t size = 2;
+  const uint8_t anim_index = current_animation;
+  srand(time(NULL));
+
+  int8_t x = 0, y = 0, z = 0;
+  int8_t dx = 1, dy = 0, dz = 0;
+
+  random_direction(&dx, &dy, &dz);
+
+  while (anim_index == current_animation) {
+    clear_cube();
+
+    // draw 2x2x2 cube
+    for (int ix = 0; ix < size; ix++) {
+      for (int iy = 0; iy < size; iy++) {
+        for (int iz = 0; iz < size; iz++) {
+          select_led(x + ix, y + iy, z + iz);
+        }
+      }
+    }
+
+    anim_delay(80);
+    if (!(PINC & (1 << PC3)))
+      return;
+
+    // check next position
+    int8_t nx = x + dx;
+    int8_t ny = y + dy;
+    int8_t nz = z + dz;
+
+    // if we would hit a border → choose a new random direction
+    if (nx < 0 || nx > 6 - size ||
+        ny < 0 || ny > 6 - size ||
+        nz < 0 || nz > 6 - size) {
+
+      random_direction(&dx, &dy, &dz);
+      continue;  // try again next frame
+    }
+
+    // move
+    x = nx;
+    y = ny;
+    z = nz;
+  }
+}
+
+const uint8_t digit_4[6][3] = {
+  {1,0,1},
+  {1,0,1},
+  {1,0,1},
+  {1,1,1},
+  {0,0,1},
+  {0,0,1}
+};
+
+const uint8_t digit_2[6][3] = {
+  {1,1,1},
+  {0,0,1},
+  {1,1,1},
+  {1,0,0},
+  {1,1,1},
+  {0,0,0}
+};
+
+void draw_42_face(uint8_t y) {
+  for (uint8_t z = 0; z < 6; z++) {
+    for (uint8_t x = 0; x < 3; x++) {
+      if (digit_4[z][x])
+        select_led(x, y, 5 - z);   // left digit (XZ plane)
+    }
+  }
+  y = 5 - y;
+  for (uint8_t z = 0; z < 6; z++) {
+    for (uint8_t x = 0; x < 3; x++) {
+      if (digit_2[z][x])
+        select_led(x + 3, y, 5 - z); // right digit
+    }
+  }
+}
+
+void moving_42() {
+  const uint8_t anim_index = current_animation;
+  int8_t y = 0;
+  int8_t dy = 1;
+
+  while (anim_index == current_animation) {
+    clear_cube();
+
+    draw_42_face(y);
+
+    anim_delay(80);
+    if (!(PINC & (1 << PC3)))
+      return;
+
+    if (y + dy < 0 || y + dy > 5) {
+      dy = -dy;
+      anim_delay(120);
+    }
+
+    y += dy;
   }
 }

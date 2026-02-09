@@ -20,6 +20,10 @@ void drop_adder();
 void vertical_sine_wave_rotated(float freq);
 void rain_animation(float density);
 void solar_clock(DS1307_Time t);
+void expanding_cube();
+void moving_cube_random();
+void moving_42();
+
 
 #endif
 

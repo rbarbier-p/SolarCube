@@ -11,6 +11,7 @@
 #define RTCADDR 0x50
 
 volatile uint8_t current_animation = 0;
+volatile uint8_t cycle_anim = 0;
 
 ISR(PCINT1_vect)
 {
@@ -50,6 +51,39 @@ void print_time(DS1307_Time *t) {
   UART_print_str("\r\n");
 }
 
+/*
+void cycle() {
+  const uint8_t anim_index = current_animation;
+
+  timer_cycle_init();
+
+  while (anim_index == current_animation) {
+    switch (cycle_anim) {
+      case 0:
+        vertical_sine_wave(0.5);
+        break;
+      case 1:
+        vertical_sine_wave_rotated(0.5);
+        break;
+      case 2:
+        rain_animation(0.1);
+        break;
+      case 3:
+        expanding_cube();
+        break;
+      case 4:
+        moving_cube_random();
+        break;
+      case 5:
+        moving_42();
+        break;
+      default:
+        cycle_anim = 0;
+        continue;
+    }
+  }
+} */
+
 int main(void) {
   DDRC &= ~(1 << PC3);
   PORTC |= (1 << PC3);
@@ -87,9 +121,16 @@ int main(void) {
         vertical_sine_wave_rotated(0.5);
         break;
       case 3:
-        continue;
-      case 4:
         rain_animation(0.1);
+        break;
+      case 4:
+        expanding_cube();
+        break;
+      case 5:
+        moving_cube_random();
+        break;
+      case 6:
+        moving_42();
         break;
       default:
         current_animation = 0;
