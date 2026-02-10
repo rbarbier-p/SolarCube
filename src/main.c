@@ -39,7 +39,7 @@ void timer0_OFF(void) {
 ISR(TIMER0_COMPA_vect) {
   anim_timer_ms++;
 
-  if (anim_timer_ms >= 15000) {
+  if (anim_timer_ms >= 10000) {
     anim_timer_ms = 0;
     current_animation++;
   }
