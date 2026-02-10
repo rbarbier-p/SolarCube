@@ -351,8 +351,6 @@ void expanding_cube() {
             (y == min || y == max) +
             (z == min || z == max);
 
-
-            // exactly two coordinates on the boundary = edge
             if (on_edge >= 2) {
               select_led(x, y, z);
             }
@@ -393,7 +391,7 @@ void random_direction(int8_t *dx, int8_t *dy, int8_t *dz) {
     if (a == 2 || b == 2) *dz = rand_sign();
 
   } else {
-    // 3 axes (true diagonal)
+    // 3 axesscc
     *dx = rand_sign();
     *dy = rand_sign();
     *dz = rand_sign();

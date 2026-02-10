@@ -11,25 +11,54 @@
 #define RTCADDR 0x50
 
 volatile uint8_t current_animation = 0;
-volatile uint8_t cycle_anim = 0;
+volatile uint16_t anim_timer_ms = 0;
+
+void timer0_init(void) {
+  TCCR0A = (1 << WGM01);
+  TCCR0B = 0;
+
+  OCR0A = 249;
+
+  TIMSK0 &= ~(1 << OCIE0A);
+  TCNT0 = 0;
+}
+
+void timer0_ON(void) {
+  TCNT0 = 0;
+  anim_timer_ms = 0;
+
+  TIMSK0 |= (1 << OCIE0A);
+  TCCR0B = (1 << CS01) | (1 << CS00);
+}
+
+void timer0_OFF(void) {
+  TCCR0B = 0;
+  TIMSK0 &= ~(1 << OCIE0A);
+}
+
+ISR(TIMER0_COMPA_vect) {
+  anim_timer_ms++;
+
+  if (anim_timer_ms >= 15000) {
+    anim_timer_ms = 0;
+    current_animation++;
+  }
+}
 
 ISR(PCINT1_vect)
 {
-    static uint8_t last_pc3 = 1;          // previous state (pull-up = high)
-    uint8_t now_pc3 = PINC & (1 << PC3);  // current state
+  static uint8_t last_pc3 = 1;
+  uint8_t now_pc3 = PINC & (1 << PC3);
 
-    // Detect button press: HIGH -> LOW on PC3
-    if (last_pc3 && !now_pc3)
-    {
-        _delay_ms(5);                    // small debounce
-        if (!(PINC & (1 << PC3)))        // still low after debounce
-        {
-            current_animation++;
-        }
-    }
+  if (last_pc3 && !now_pc3)
+  {
+    _delay_ms(5);
+    if (!(PINC & (1 << PC3)))
+      current_animation++;
+  }
 
-    last_pc3 = now_pc3;                 // store state for next interrupt
-    PCIFR |= (1 << PCIF1);               // clear PCINT1 group flag
+  last_pc3 = now_pc3;
+  PCIFR |= (1 << PCIF1);
 }
 
 void print_time(DS1307_Time *t) {
@@ -39,64 +68,51 @@ void print_time(DS1307_Time *t) {
   UART_print_num(t->minute);
   UART_tx(':');
   UART_print_num(t->second);
-
   UART_print_str("   ");
-
   UART_print_num(t->date);
   UART_tx('/');
   UART_print_num(t->month);
   UART_tx('/');
   UART_print_num(t->year);
-
   UART_print_str("\r\n");
 }
 
-/*
 void cycle() {
   const uint8_t anim_index = current_animation;
 
-  timer_cycle_init();
+  timer0_ON();
+  current_animation = 0;
 
-  while (anim_index == current_animation) {
-    switch (cycle_anim) {
-      case 0:
-        vertical_sine_wave(0.5);
-        break;
-      case 1:
-        vertical_sine_wave_rotated(0.5);
-        break;
-      case 2:
-        rain_animation(0.1);
-        break;
-      case 3:
-        expanding_cube();
-        break;
-      case 4:
-        moving_cube_random();
-        break;
-      case 5:
-        moving_42();
-        break;
-      default:
-        cycle_anim = 0;
-        continue;
+  while (PINC & (1 << PC3)) {
+    switch (current_animation) {
+      case 0: vertical_sine_wave(0.5); break;
+      case 1: vertical_sine_wave_rotated(0.5); break;
+      case 2: rain_animation(0.1); break;
+      case 3: expanding_cube(); break;
+      case 4: moving_cube_random(); break;
+      case 5: moving_42(); break;
+      default: current_animation = 0; continue;
     }
   }
-} */
+
+  timer0_OFF();
+  current_animation = 2;
+  anim_timer_ms = 0;
+} 
 
 int main(void) {
   DDRC &= ~(1 << PC3);
   PORTC |= (1 << PC3);
-  PCICR |= (1 << PCIE1);     // enable PCINT1 group
-  PCMSK1 |= (1 << PCINT11);  // enable PCINT11 (PC3) specifically
+  PCICR |= (1 << PCIE1);
+  PCMSK1 |= (1 << PCINT11);
 
   pin_init();
   UART_init();
   I2C_init(16, 15);
-  DS1307_init();   // ensure oscillator ON
-  UART_print_str("Starting DS1307...\r\n");
+  DS1307_init();
+  timer0_init();
 
-  DS1307_Time t = {
+  /*DS1307_Time t = {
     .year = YEAR,
     .month = MONTH,
     .date = DAY,
@@ -105,36 +121,23 @@ int main(void) {
     .second = SEC,
     .day = 1
   };
+  DS1307_setTime(&t);*/
 
-  DS1307_setTime(&t);
+  DS1307_Time t;
+  DS1307_getTime(&t);
 
   sei();
   while (1) {
     switch (current_animation) {
-      case 0:
-        solar_clock(t);
-        break;
-      case 1:
-        vertical_sine_wave(0.5);
-        break;
-      case 2:
-        vertical_sine_wave_rotated(0.5);
-        break;
-      case 3:
-        rain_animation(0.1);
-        break;
-      case 4:
-        expanding_cube();
-        break;
-      case 5:
-        moving_cube_random();
-        break;
-      case 6:
-        moving_42();
-        break;
-      default:
-        current_animation = 0;
-        continue;
+      case 0: solar_clock(t); break;
+      case 1: cycle(); break;
+      case 2: vertical_sine_wave(0.5); break;
+      case 3: vertical_sine_wave_rotated(0.5); break;
+      case 4: rain_animation(0.1); break;
+      case 5: expanding_cube(); break;
+      case 6: moving_cube_random(); break;
+      case 7: moving_42(); break;
+      default: current_animation = 0; continue;
     }
   }
 }
